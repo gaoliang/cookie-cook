@@ -8,18 +8,16 @@
       </v-app-bar-nav-icon>
 
       <v-toolbar-title>Cookie Cook</v-toolbar-title>
+
       <v-spacer></v-spacer>
-
-      <v-btn icon color="error" @click="deleteCookies">
-        <v-icon>mdi-delete-forever</v-icon>
-      </v-btn>
-      <v-btn icon>
-        <v-icon>mdi-export</v-icon>
+      <v-text-field label="URL" placeholder="请输入URL" solo dense hide-details v-model="inputURL"></v-text-field>
+      <v-btn icon @click="currentFilterURL=inputURL; searchCookies()">
+        <v-icon>mdi-filter</v-icon>
       </v-btn>
 
-      <v-btn icon>
+      <!-- <v-btn icon>
         <v-icon>mdi-magnify</v-icon>
-      </v-btn>
+      </v-btn>-->
 
       <!-- -->
     </v-app-bar>
@@ -38,6 +36,9 @@
             </v-expansion-panel-header>
             <v-expansion-panel-content>
               <v-row no-gutters>
+                <v-col cols="12" class="text--secondary">
+                  <v-textarea label="Name" v-model="cookie.name" hide-details auto-grow rows="1"></v-textarea>
+                </v-col>
                 <v-col cols="12" class="text--secondary">
                   <v-textarea label="Value" v-model="cookie.value" hide-details auto-grow rows="1"></v-textarea>
                 </v-col>
@@ -70,15 +71,33 @@
       <v-btn icon @click="openIndex">
         <v-icon>mdi-github-circle</v-icon>
       </v-btn>
+      <v-spacer></v-spacer>
+      <v-select :items="copyStyles" v-model="copyStyle" hide-details dense style="max-width: 200px"></v-select>
+      <v-btn icon @click="copy">
+        <v-icon>mdi-content-copy</v-icon>
+      </v-btn>
+      <v-btn icon color="error" @click="deleteCookies">
+        <v-icon>mdi-delete-forever</v-icon>
+      </v-btn>
     </v-footer>
+    <v-snackbar v-model="copySucessMessage">Copy Success</v-snackbar>
   </v-app>
 </template>
 
 <script>
-
+import { cookiesToText } from '@/utils.js'
 export default {
   data () {
     return {
+      inputURL: '',
+      currentFilterURL: '',
+      copySucessMessage: false,
+      copyStyle: 'json',
+      copyStyles: [
+        { value: 'json', text: 'JSON or Python Dict' },
+        { value: 'http', text: 'Http Header Value' },
+        { value: 'curl', text: 'Curl Template' }
+      ],
       currentTabID: null,
       currentTabURL: '',
       currentTabCookiesStoreId: null,
@@ -87,8 +106,10 @@ export default {
     }
   },
   mounted () {
-    if ((window.matchMedia('(prefers-color-scheme: light)').matches) ||
-      (window.matchMedia('(prefers-color-scheme: no-preference)').matches)) {
+    if (
+      window.matchMedia('(prefers-color-scheme: light)').matches ||
+      window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    ) {
       this.$vuetify.theme.dark = false
     } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
       this.$vuetify.theme.dark = true
@@ -96,22 +117,47 @@ export default {
     this.init()
   },
   methods: {
+    copy () {
+      let text = cookiesToText(this.copyStyle, this.cookies)
+      let that = this
+      console.log(text)
+      this.$copyText(text).then(
+        function (e) {
+          that.copySucessMessage = true
+          console.log(e)
+        },
+        function (e) {
+          alert('Can not copy')
+          console.log(e)
+        }
+      )
+    },
     openIndex () {
-      chrome.tabs.create({ url: 'https://www.github.com/gaoliang/cookie-cook' })
+      chrome.tabs.create({
+        url: 'https://www.github.com/gaoliang/cookie-cook'
+      })
     },
     searchCookies () {
       let that = this
       chrome.cookies.getAllCookieStores(function (cookieStores) {
-        for (let x = 0; x < cookieStores.length; x++) {
-          if (cookieStores[x].tabIds.indexOf(that.currentTabID) !== -1) {
-            that.currentTabCookiesStoreId = cookieStores[x].id
-            break
+        if (this.currentTabURL !== this.currentFilterURL) {
+          for (let x = 0; x < cookieStores.length; x++) {
+            if (cookieStores[x].tabIds.indexOf(that.currentTabID) !== -1) {
+              that.currentTabCookiesStoreId = cookieStores[x].id
+              break
+            }
           }
-        }
-        chrome.cookies.getAll({ storeId: that.currentTabCookiesStoreId, url: that.currentTabURL },
-          cookies => {
+          chrome.cookies.getAll(
+            { storeId: that.currentTabCookiesStoreId, url: that.currentTabURL },
+            cookies => {
+              that.cookies = cookies
+            }
+          )
+        } else {
+          chrome.cookies.getAll({ url: that.currentFilterURL }, cookies => {
             that.cookies = cookies
           })
+        }
       })
     },
     init () {
@@ -122,6 +168,9 @@ export default {
           lastFocusedWindow: true
         },
         function (tabs) {
+          console.log(tabs)
+          that.inputURL = tabs[0].url
+          that.currentFilterURL = tabs[0].url
           that.currentTabURL = tabs[0].url
           that.currentTabID = tabs[0].id
           that.searchCookies()
@@ -133,12 +182,14 @@ export default {
       this.cookies.forEach(function (cookie) {
         chrome.cookies.remove(
           {
-            'url': that.currentTabURL,
-            'name': cookie.name,
-            'storeId': cookie.storeId
-          }, function () {
+            url: that.currentFilterURL,
+            name: cookie.name,
+            storeId: cookie.storeId
+          },
+          function () {
             that.init()
-          })
+          }
+        )
       })
     }
   },

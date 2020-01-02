@@ -5,8 +5,8 @@
   "description": "A Vue Browser Extension",
   "default_locale": "en",
   "permissions": [
-    "<all_urls>",
-    "*://*/*"
+    "cookies",
+    "<all_urls>"
   ],
   "icons": {
     "16": "icons/16.png",
