@@ -1,6 +1,7 @@
 {
   "manifest_version": 2,
   "name": "__MSG_extName__",
+  "version": "0.0.1",
   "homepage_url": "https://github.com/gaoliang/cookie-cook",
   "description": "A Browser Extension To Manage Cookies",
   "default_locale": "en",
