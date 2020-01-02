@@ -89,6 +89,9 @@ import { cookiesToText } from '@/utils.js'
 export default {
   data () {
     return {
+      currentTabID: null,
+      currentTabURL: '',
+      currentTabCookiesStoreId: null,
       inputURL: '',
       currentFilterURL: '',
       copySucessMessage: false,
@@ -98,9 +101,6 @@ export default {
         { value: 'http', text: 'Http Header Value' },
         { value: 'curl', text: 'Curl Template' }
       ],
-      currentTabID: null,
-      currentTabURL: '',
-      currentTabCookiesStoreId: null,
       cookies: [],
       sameSiteItems: ['strict', 'lax', 'none', 'no_restriction', 'unspecified']
     }
