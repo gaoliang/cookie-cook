@@ -120,15 +120,12 @@ export default {
     copy () {
       let text = cookiesToText(this.copyStyle, this.cookies)
       let that = this
-      console.log(text)
       this.$copyText(text).then(
         function (e) {
           that.copySucessMessage = true
-          console.log(e)
         },
         function (e) {
           alert('Can not copy')
-          console.log(e)
         }
       )
     },
@@ -168,7 +165,6 @@ export default {
           lastFocusedWindow: true
         },
         function (tabs) {
-          console.log(tabs)
           that.inputURL = tabs[0].url
           that.currentFilterURL = tabs[0].url
           that.currentTabURL = tabs[0].url
@@ -200,7 +196,7 @@ export default {
 <style>
 html {
   width: 780px;
-  height: 600px;
+  height: 500px;
 }
 
 .cookies-table {
