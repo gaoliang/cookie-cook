@@ -102,6 +102,7 @@ export default {
         { value: 'curl', text: 'Curl Template' }
       ],
       cookies: [],
+      preCookies: [],
       sameSiteItems: ['strict', 'lax', 'none', 'no_restriction', 'unspecified']
     }
   },
@@ -134,7 +135,7 @@ export default {
         url: 'https://www.github.com/gaoliang/cookie-cook'
       })
     },
-    searchCookies () {
+    searchCookies (url) {
       let that = this
       chrome.cookies.getAllCookieStores(function (cookieStores) {
         if (this.currentTabURL !== this.currentFilterURL) {
@@ -169,7 +170,9 @@ export default {
           that.currentFilterURL = tabs[0].url
           that.currentTabURL = tabs[0].url
           that.currentTabID = tabs[0].id
-          that.searchCookies()
+          if (that.currentTabURL) {
+            that.searchCookies()
+          }
         }
       )
     },
